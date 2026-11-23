@@ -1,0 +1,25 @@
+<resources>
+    <string name="app_name">ClueGrid</string>
+    <string name="auth_title">ClueGrid</string>
+    <string name="auth_subtitle">Minimal trivia for friends. Unlock tiers from 10 to 100 points and climb the live scoreboard.</string>
+    <string name="auth_google_only_note">Google Sign-In required to save progress &amp; compete</string>
+    <string name="sign_in_with_google">Sign in with Google</string>
+    <string name="onboarding_title">Choose your player name</string>
+    <string name="onboarding_subtitle">This name appears on your friends leaderboard.</string>
+    <string name="onboarding_username_label">Leaderboard Username</string>
+    <string name="onboarding_username_hint">e.g. Alex, QuizAce</string>
+    <string name="onboarding_start_button">Enter the Board</string>
+    <string name="nav_board">Board</string>
+    <string name="nav_leaderboard">Leaderboard</string>
+    <string name="category_geography">Geography</string>
+    <string name="category_maths">Maths</string>
+    <string name="category_science">Science</string>
+    <string name="category_literature">Literature</string>
+    <string name="new_round">New Round</string>
+    <string name="sign_out">Sign Out</string>
+    <string name="leaderboard_title">Friends Leaderboard</string>
+    <string name="leaderboard_empty">No scores posted yet. Answer a clue to claim #1.</string>
+    <string name="sound_on">Mute sound effects</string>
+    <string name="sound_off">Unmute sound effects</string>
+    <string name="account_settings">Account &amp; Stats</string>
+</resources>

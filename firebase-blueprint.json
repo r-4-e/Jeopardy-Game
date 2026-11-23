@@ -1,0 +1,161 @@
+{
+  "entities": {
+    "UserProgress": {
+      "title": "UserProgress",
+      "description": "Private authenticated player progression, tier unlocks, and cumulative score state.",
+      "type": "object",
+      "properties": {
+        "userId": {
+          "type": "string",
+          "description": "Authenticated Firebase user UID."
+        },
+        "username": {
+          "type": "string",
+          "description": "Player-chosen display name shown on the leaderboard."
+        },
+        "totalScore": {
+          "type": "integer",
+          "description": "Player cumulative score."
+        },
+        "correctCount": {
+          "type": "integer",
+          "description": "Total correct answers count."
+        },
+        "missedCount": {
+          "type": "integer",
+          "description": "Total missed answers count."
+        },
+        "currentStreak": {
+          "type": "integer",
+          "description": "Current consecutive correct answers streak."
+        },
+        "bestStreak": {
+          "type": "integer",
+          "description": "Best consecutive correct answers streak."
+        },
+        "unlockedGeo": {
+          "type": "integer",
+          "description": "Highest unlocked point tier for Geography (10, 30, 50, 100)."
+        },
+        "unlockedMaths": {
+          "type": "integer",
+          "description": "Highest unlocked point tier for Maths (10, 30, 50, 100)."
+        },
+        "unlockedScience": {
+          "type": "integer",
+          "description": "Highest unlocked point tier for Science (10, 30, 50, 100)."
+        },
+        "unlockedLit": {
+          "type": "integer",
+          "description": "Highest unlocked point tier for Literature (10, 30, 50, 100)."
+        },
+        "answeredIds": {
+          "type": "array",
+          "description": "Bounded list of question IDs answered in the active progression."
+        },
+        "createdAt": {
+          "type": "string",
+          "format": "date-time",
+          "description": "Server timestamp of profile creation (FieldValue.serverTimestamp())."
+        },
+        "updatedAt": {
+          "type": "string",
+          "format": "date-time",
+          "description": "Server timestamp of latest progression update (FieldValue.serverTimestamp())."
+        }
+      },
+      "required": [
+        "userId",
+        "username",
+        "totalScore",
+        "correctCount",
+        "missedCount",
+        "currentStreak",
+        "bestStreak",
+        "unlockedGeo",
+        "unlockedMaths",
+        "unlockedScience",
+        "unlockedLit",
+        "answeredIds",
+        "createdAt",
+        "updatedAt"
+      ]
+    },
+    "LeaderboardEntry": {
+      "title": "LeaderboardEntry",
+      "description": "Public friends scoreboard entry containing no PII.",
+      "type": "object",
+      "properties": {
+        "userId": {
+          "type": "string",
+          "description": "Authenticated Firebase user UID."
+        },
+        "username": {
+          "type": "string",
+          "description": "Player-chosen leaderboard name."
+        },
+        "totalScore": {
+          "type": "integer",
+          "description": "Player cumulative score."
+        },
+        "correctCount": {
+          "type": "integer",
+          "description": "Total correct answers count."
+        },
+        "missedCount": {
+          "type": "integer",
+          "description": "Total missed answers count."
+        },
+        "bestStreak": {
+          "type": "integer",
+          "description": "Best consecutive correct answers streak."
+        },
+        "highestTier": {
+          "type": "integer",
+          "description": "Highest unlocked tier across all categories (10, 30, 50, 100)."
+        },
+        "visibility": {
+          "type": "string",
+          "enum": ["PUBLIC"],
+          "description": "Scoreboard visibility scope."
+        },
+        "createdAt": {
+          "type": "string",
+          "format": "date-time",
+          "description": "Server timestamp of entry creation (FieldValue.serverTimestamp())."
+        },
+        "updatedAt": {
+          "type": "string",
+          "format": "date-time",
+          "description": "Server timestamp of latest update (FieldValue.serverTimestamp())."
+        }
+      },
+      "required": [
+        "userId",
+        "username",
+        "totalScore",
+        "correctCount",
+        "missedCount",
+        "bestStreak",
+        "highestTier",
+        "visibility",
+        "createdAt",
+        "updatedAt"
+      ]
+    }
+  },
+  "firestore": {
+    "/users/{userId}": {
+      "schema": {
+        "$ref": "#/entities/UserProgress"
+      },
+      "description": "Owner-isolated player progression and unlocked category tiers."
+    },
+    "/leaderboard/{userId}": {
+      "schema": {
+        "$ref": "#/entities/LeaderboardEntry"
+      },
+      "description": "Shared friends leaderboard visible to authenticated Google users."
+    }
+  }
+}

@@ -1,0 +1,6 @@
+{
+  "name": "ClueGrid",
+  "description": "Minimal Jeopardy-style trivia game across Geography, Maths, Science, and Literature with tiered point unlocks, Google Sign-In leaderboard, and sound effects.",
+  "requestFramePermissions": [],
+  "majorCapabilities": ["MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"]
+}

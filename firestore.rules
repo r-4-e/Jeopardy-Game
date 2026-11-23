@@ -1,0 +1,153 @@
+rules_version = '2';
+service cloud.firestore {
+  match /databases/{database}/documents {
+    // Global default-deny safety net
+    match /{document=**} {
+      allow read, write: if false;
+    }
+
+    function isSignedIn() {
+      return request.auth != null;
+    }
+
+    function isValidId(id) {
+      return id is string && id.size() >= 1 && id.size() <= 128 && id.matches('^[a-zA-Z0-9_\\-]+$');
+    }
+
+    function incoming() {
+      return request.resource.data;
+    }
+
+    function existing() {
+      return resource.data;
+    }
+
+    function isValidTier(tier) {
+      return tier is int && tier in [10, 30, 50, 100];
+    }
+
+    function isValidUsername(name) {
+      return name is string && name.size() >= 2 && name.size() <= 24;
+    }
+
+    function isValidUserProgress(data) {
+      return data.userId is string &&
+             data.userId.size() >= 1 &&
+             data.userId.size() <= 128 &&
+             isValidUsername(data.username) &&
+             data.totalScore is int && data.totalScore >= 0 && data.totalScore <= 1000000 &&
+             data.correctCount is int && data.correctCount >= 0 && data.correctCount <= 100000 &&
+             data.missedCount is int && data.missedCount >= 0 && data.missedCount <= 100000 &&
+             data.currentStreak is int && data.currentStreak >= 0 && data.currentStreak <= 100000 &&
+             data.bestStreak is int && data.bestStreak >= 0 && data.bestStreak <= 100000 &&
+             isValidTier(data.unlockedGeo) &&
+             isValidTier(data.unlockedMaths) &&
+             isValidTier(data.unlockedScience) &&
+             isValidTier(data.unlockedLit) &&
+             data.answeredIds is list &&
+             data.answeredIds.size() <= 64 &&
+             (data.answeredIds.size() == 0 || (data.answeredIds[0] is string && data.answeredIds[0].size() <= 40));
+    }
+
+    function isValidLeaderboardEntry(data) {
+      return data.userId is string &&
+             data.userId.size() >= 1 &&
+             data.userId.size() <= 128 &&
+             isValidUsername(data.username) &&
+             data.totalScore is int && data.totalScore >= 0 && data.totalScore <= 1000000 &&
+             data.correctCount is int && data.correctCount >= 0 && data.correctCount <= 100000 &&
+             data.missedCount is int && data.missedCount >= 0 && data.missedCount <= 100000 &&
+             data.bestStreak is int && data.bestStreak >= 0 && data.bestStreak <= 100000 &&
+             isValidTier(data.highestTier) &&
+             data.visibility == 'PUBLIC';
+    }
+
+    match /users/{userId} {
+      allow get: if isSignedIn() && isValidId(userId) && request.auth.uid == userId;
+      allow list: if isSignedIn() && request.auth.uid == userId;
+
+      allow create: if isSignedIn() &&
+                       isValidId(userId) &&
+                       request.auth.uid == userId &&
+                       incoming().userId == request.auth.uid &&
+                       incoming().keys().hasAll([
+                         'userId', 'username', 'totalScore', 'correctCount', 'missedCount',
+                         'currentStreak', 'bestStreak', 'unlockedGeo', 'unlockedMaths',
+                         'unlockedScience', 'unlockedLit', 'answeredIds', 'createdAt', 'updatedAt'
+                       ]) &&
+                       incoming().keys().hasOnly([
+                         'userId', 'username', 'totalScore', 'correctCount', 'missedCount',
+                         'currentStreak', 'bestStreak', 'unlockedGeo', 'unlockedMaths',
+                         'unlockedScience', 'unlockedLit', 'answeredIds', 'createdAt', 'updatedAt'
+                       ]) &&
+                       incoming().createdAt is timestamp &&
+                       incoming().createdAt <= request.time &&
+                       incoming().updatedAt is timestamp &&
+                       incoming().updatedAt <= request.time &&
+                       isValidUserProgress(incoming());
+
+      allow update: if isSignedIn() &&
+                       isValidId(userId) &&
+                       request.auth.uid == userId &&
+                       isValidUserProgress(incoming()) &&
+                       incoming().userId == existing().userId &&
+                       incoming().createdAt == existing().createdAt &&
+                       incoming().updatedAt is timestamp &&
+                       incoming().updatedAt <= request.time && (
+                         // Action 1: Rename username
+                         incoming().diff(existing()).affectedKeys().hasOnly(['username', 'updatedAt']) ||
+                         // Action 2: Record answer & tier unlock progression
+                         incoming().diff(existing()).affectedKeys().hasOnly([
+                           'totalScore', 'correctCount', 'missedCount', 'currentStreak', 'bestStreak',
+                           'unlockedGeo', 'unlockedMaths', 'unlockedScience', 'unlockedLit',
+                           'answeredIds', 'updatedAt'
+                         ]) ||
+                         // Action 3: Reset board cycle (clears answeredIds for fresh board)
+                         incoming().diff(existing()).affectedKeys().hasOnly(['answeredIds', 'updatedAt'])
+                       );
+
+      allow delete: if isSignedIn() && isValidId(userId) && request.auth.uid == userId;
+    }
+
+    match /leaderboard/{userId} {
+      allow get: if isSignedIn() && isValidId(userId) && (resource == null || existing().visibility == 'PUBLIC');
+      allow list: if isSignedIn() && existing().visibility == 'PUBLIC';
+
+      allow create: if isSignedIn() &&
+                       isValidId(userId) &&
+                       request.auth.uid == userId &&
+                       incoming().userId == request.auth.uid &&
+                       incoming().keys().hasAll([
+                         'userId', 'username', 'totalScore', 'correctCount', 'missedCount',
+                         'bestStreak', 'highestTier', 'visibility', 'createdAt', 'updatedAt'
+                       ]) &&
+                       incoming().keys().hasOnly([
+                         'userId', 'username', 'totalScore', 'correctCount', 'missedCount',
+                         'bestStreak', 'highestTier', 'visibility', 'createdAt', 'updatedAt'
+                       ]) &&
+                       incoming().createdAt is timestamp &&
+                       incoming().createdAt <= request.time &&
+                       incoming().updatedAt is timestamp &&
+                       incoming().updatedAt <= request.time &&
+                       isValidLeaderboardEntry(incoming());
+
+      allow update: if isSignedIn() &&
+                       isValidId(userId) &&
+                       request.auth.uid == userId &&
+                       isValidLeaderboardEntry(incoming()) &&
+                       incoming().userId == existing().userId &&
+                       incoming().createdAt == existing().createdAt &&
+                       incoming().updatedAt is timestamp &&
+                       incoming().updatedAt <= request.time && (
+                         // Action 1: Rename username
+                         incoming().diff(existing()).affectedKeys().hasOnly(['username', 'updatedAt']) ||
+                         // Action 2: Sync game stats
+                         incoming().diff(existing()).affectedKeys().hasOnly([
+                           'totalScore', 'correctCount', 'missedCount', 'bestStreak', 'highestTier', 'updatedAt'
+                         ])
+                       );
+
+      allow delete: if isSignedIn() && isValidId(userId) && request.auth.uid == userId;
+    }
+  }
+}
